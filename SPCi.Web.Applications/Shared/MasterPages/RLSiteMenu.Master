@@ -1,0 +1,97 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="RLSiteMenu.Master.cs" Inherits="SPCi.Web.Public.Shared.MasterPages.RLSiteMenu" %>
+
+<%@ Register TagPrefix="telerik" Namespace="Telerik.Web.UI" Assembly="Telerik.Web.UI" %>
+<!DOCTYPE html>
+
+<html>
+<head runat="server">
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ <meta name="viewport" content="initial-scale=1.0, minimum-scale=1, maximum-scale=1.0, user-scalable=no" />
+ <title>Sociedad Portuaria de Caldera</title>
+ <link href="https://web.spcaldera.com/SPC/Public/Shared/CSS/default.css" rel="stylesheet" />
+ <asp:ContentPlaceHolder ID="HeadContent" runat="server">
+ </asp:ContentPlaceHolder>
+</head>
+<body>
+ <form id="form1" runat="server">
+  <telerik:RadScriptManager runat="server">
+   <Scripts>
+    <asp:ScriptReference Assembly="Telerik.Web.UI" Name="Telerik.Web.UI.Common.Core.js" />
+    <asp:ScriptReference Assembly="Telerik.Web.UI" Name="Telerik.Web.UI.Common.jQuery.js" />
+    <asp:ScriptReference Assembly="Telerik.Web.UI" Name="Telerik.Web.UI.Common.jQueryInclude.js" />
+   </Scripts>
+  </telerik:RadScriptManager>
+  <div id="wrapper">
+   <telerik:RadPageLayout runat="server" ID="MasterLayout" GridType="Fluid">
+    <Rows>
+     <%--Header--%>
+     <telerik:LayoutRow CssClass="header">
+
+
+      <Columns>                            <%-- Navbar --%>
+                            <telerik:LayoutColumn Span="4" SpanMd="4" SpanSm="2" SpanXs="2">
+                                <telerik:RadMenu ID="mnuPrincipal" runat="server" Flow="Horizontal" Width="100%" RenderMode="Auto">
+                                    <Items>
+                                        <telerik:RadMenuItem Text="Archivo" NavigateUrl="~/Default.aspx" />
+                                        <telerik:RadMenuItem Text="Transacciones" NavigateUrl="~/Default.aspx">
+                                            <Items>
+                                                <telerik:RadMenuItem Text="Solicitud Registro Empresa" NavigateUrl="../../Pages/gC/Solicitudes/Solicitudes.aspx" />
+                                                <telerik:RadMenuItem Text="Registrar Autorizados" NavigateUrl="../../Pages/gC/Autorizados/Autorizados.aspx" />
+                                            </Items>
+                                        </telerik:RadMenuItem>
+                                        <telerik:RadMenuItem Text="Consultas" NavigateUrl="~/Default.aspx">
+                                            <Items>
+                                                <telerik:RadMenuItem Text="Solicitudes Pendientes" NavigateUrl="../../Pages/gC/Consultas/Consulta.aspx" />
+                                            </Items>
+                                        </telerik:RadMenuItem>
+                                        <telerik:RadMenuItem Text="Reportes" NavigateUrl="~/Reportes.aspx" />
+                                    </Items>
+                                </telerik:RadMenu>
+                            </telerik:LayoutColumn>
+
+
+
+       <%--Rol--%>
+       <telerik:LayoutColumn Span="2" SpanMd="4" SpanSm="5" SpanXs="5">
+       </telerik:LayoutColumn>
+       <%--Entidad--%>
+       <telerik:LayoutColumn Span="4" SpanMd="4" SpanSm="5" SpanXs="5">
+       </telerik:LayoutColumn>
+       <%--Usuario--%>
+       <telerik:LayoutColumn Span="2" HiddenMd="true" HiddenSm="true" HiddenXs="true">
+        <telerik:RadLabel ID="lblNombreCorto" runat="server" ForeColor="White" RenderMode="Lightweight" Text="Usuario de prueba"></telerik:RadLabel>
+       </telerik:LayoutColumn>
+      </Columns>
+     </telerik:LayoutRow>
+
+     <%--Main--%>
+     <telerik:LayoutRow>
+      <Columns>
+       <%--Content--%>
+       <telerik:CompositeLayoutColumn Span="12" SpanMd="12" SpanSm="12" SpanXs="12">
+        <Content>
+         <telerik:RadLabel ID="lblEntidad" runat="server" ForeColor="LightBlue" RenderMode="Lightweight" Visible="False"></telerik:RadLabel>
+         <telerik:RadWindowManager runat="server" ID="wnmPrincipal"></telerik:RadWindowManager>
+         <asp:ContentPlaceHolder ID="MainContent" runat="server">
+         </asp:ContentPlaceHolder>
+        </Content>
+       </telerik:CompositeLayoutColumn>
+      </Columns>
+     </telerik:LayoutRow>
+     <%--Footer--%>
+     <telerik:LayoutRow>
+      <Columns>
+       <telerik:LayoutColumn CssClass="footer">
+        <%--<hr />--%>
+        <asp:ContentPlaceHolder ID="FooterContent" runat="server">
+        </asp:ContentPlaceHolder>
+        <%--© 2006-2023 Sociedad Portuaria de Caldera S.A.--%>
+       </telerik:LayoutColumn>
+      </Columns>
+     </telerik:LayoutRow>
+    </Rows>
+   </telerik:RadPageLayout>
+  </div>
+ </form>
+</body>
+</html>
