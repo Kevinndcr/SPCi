@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Web.Services.Description;
 using System.Web.UI;
 using Telerik.Web.UI;
 
@@ -203,13 +204,64 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
             {
                 if (uploadedFile != null && uploadedFile.ContentLength > 0)
                 {
-                    string filePath = Path.Combine(clientePath, Path.GetFileName(uploadedFile.FileName));
+                    string fileName = Path.GetFileName(uploadedFile.FileName);
+                    string filePath = Path.Combine(clientePath, fileName);
                     uploadedFile.SaveAs(filePath);
+
+                    // Llamar al método para insertar el archivo en la base de datos
+                    InsertarArchivoAdjunto(clienteId, fileName, filePath);
                 }
             }
 
-            MostrarMensaje("Los archivos PDF han sido guardados correctamente.");
+            // Mostrar mensaje de éxito y luego recargar la página
+            MostrarMensaje("Solicitud y datos almacenados con exito!");
+            LimpiarFormulario();
+
         }
+
+        private void InsertarArchivoAdjunto(int clienteId, string nombreArchivo, string rutaArchivo)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["op_SPC"].ConnectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("AT_InsertarCUArchivoAdjunto", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        cmd.Parameters.AddWithValue("@FcCUArchivoAdjunto", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@IxClienteUsuario", clienteId);
+                        cmd.Parameters.AddWithValue("@DsCUArchivoAdjunto", "Descripción del archivo"); // Cambia esto si necesitas una descripción específica
+                        cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
+                        cmd.Parameters.AddWithValue("@NombreArchivoWeb", nombreArchivo); // Puedes ajustar esto si es necesario
+                        cmd.Parameters.AddWithValue("@CarpetaArchivoWeb", rutaArchivo); // O la ruta del archivo
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Manejar excepciones de forma adecuada (puedes registrar el error o mostrar un mensaje al usuario)
+                MostrarMensaje("Ocurrió un error al guardar la información del archivo: " + ex.Message);
+            }
+        }
+
+        private void LimpiarFormulario()
+        {
+            txtNombre.Text = string.Empty;
+            txtCedula.Text = string.Empty;
+            txtDireccion.Text = string.Empty;
+            txtTelefono.Text = string.Empty;
+            txtCorreo.Text = string.Empty;
+            txtRepresentante.Text = string.Empty;
+            txtCedulaRepresentante.Text = string.Empty;
+
+            // Si tienes otros controles o campos que necesiten limpieza, agrégales aquí.
+        }
+
+
 
         private int ObtenerUltimoClienteUsuarioId()
         {
