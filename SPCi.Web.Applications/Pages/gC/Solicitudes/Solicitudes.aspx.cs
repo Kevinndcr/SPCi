@@ -6,7 +6,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Web;
-using System.Web.Services.Description;
 using System.Web.UI;
 using Telerik.Web.UI;
 
@@ -43,9 +42,9 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
                         cmd.Parameters.AddWithValue("@CorreoElectronico", txtCorreo.Text);
                         cmd.Parameters.AddWithValue("@Direccion", txtDireccion.Text);
                         cmd.Parameters.AddWithValue("@Telefono", txtTelefono.Text);
-                        cmd.Parameters.AddWithValue("@IxCUTipoAutorizacion", 1); // Cambia esto según tu lógica
-                        cmd.Parameters.AddWithValue("@IxCUEstado", 1); // Cambia esto según tu lógica
-                        cmd.Parameters.AddWithValue("@FcClienteUsuario", DateTime.Now); // Fecha actual
+                        cmd.Parameters.AddWithValue("@IxCUTipoAutorizacion", 1);
+                        cmd.Parameters.AddWithValue("@IxCUEstado", 1); 
+                        cmd.Parameters.AddWithValue("@FcClienteUsuario", DateTime.Now); 
 
                         conn.Open();
                         cmd.ExecuteNonQuery();
@@ -60,6 +59,9 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
                     MostrarMensaje("No se pudo obtener el ID del cliente.");
                     return;
                 }
+
+                // Registrar en la bitácora
+                RegistrarBitacoraClienteUsuario(clienteId);
 
                 // Hacer visible el control de carga de archivos y el botón
                 fileUploadPDF.Visible = true;
@@ -181,7 +183,7 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
 
         private void GuardarArchivos(int pdfCount)
         {
-            string basePath = @"C:\PDFs";
+            string basePath = @"C:\PDFs";       //en este caso, se guardan de manera local en el equipo
             if (!Directory.Exists(basePath))
             {
                 Directory.CreateDirectory(basePath);
@@ -208,15 +210,17 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
                     string filePath = Path.Combine(clientePath, fileName);
                     uploadedFile.SaveAs(filePath);
 
-                    // Llamar al método para insertar el archivo en la base de datos
+                    // Aquí se llama el metodo para insertar el archivo en la base de datos
                     InsertarArchivoAdjunto(clienteId, fileName, filePath);
                 }
             }
 
-            // Mostrar mensaje de éxito y luego recargar la página
-            MostrarMensaje("Solicitud y datos almacenados con exito!");
-            LimpiarFormulario();
+            // Registrar en la bitácora
+            RegistrarBitacoraArchivoAdjunto(clienteId);
 
+            // Mostrar mensaje de éxito y luego recargar la página
+            MostrarMensaje("Solicitud y datos almacenados con éxito!");
+            LimpiarFormulario();
         }
 
         private void InsertarArchivoAdjunto(int clienteId, string nombreArchivo, string rutaArchivo)
@@ -231,10 +235,10 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
 
                         cmd.Parameters.AddWithValue("@FcCUArchivoAdjunto", DateTime.Now);
                         cmd.Parameters.AddWithValue("@IxClienteUsuario", clienteId);
-                        cmd.Parameters.AddWithValue("@DsCUArchivoAdjunto", "Descripción del archivo"); // Cambia esto si necesitas una descripción específica
+                        cmd.Parameters.AddWithValue("@DsCUArchivoAdjunto", "Achivo adjunto para la solicitud de tramite"); 
                         cmd.Parameters.AddWithValue("@NombreArchivo", nombreArchivo);
-                        cmd.Parameters.AddWithValue("@NombreArchivoWeb", nombreArchivo); // Puedes ajustar esto si es necesario
-                        cmd.Parameters.AddWithValue("@CarpetaArchivoWeb", rutaArchivo); // O la ruta del archivo
+                        cmd.Parameters.AddWithValue("@NombreArchivoWeb", nombreArchivo); 
+                        cmd.Parameters.AddWithValue("@CarpetaArchivoWeb", rutaArchivo); 
 
                         conn.Open();
                         cmd.ExecuteNonQuery();
@@ -243,9 +247,71 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
             }
             catch (Exception ex)
             {
-                // Manejar excepciones de forma adecuada (puedes registrar el error o mostrar un mensaje al usuario)
                 MostrarMensaje("Ocurrió un error al guardar la información del archivo: " + ex.Message);
             }
+        }
+
+        private void RegistrarBitacoraClienteUsuario(int clienteId)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["op_SPC"].ConnectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("AT_InsClienteUsuarioB", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        int ixSession = ObtenerIxSession();
+
+                        cmd.Parameters.AddWithValue("@IxClienteUsuario", clienteId);
+                        cmd.Parameters.AddWithValue("@IxCUEstado", 1); 
+                        cmd.Parameters.AddWithValue("@IxSession", ixSession);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Ocurrió un error al registrar la bitácora de cliente: " + ex.Message);
+            }
+        }
+
+        private void RegistrarBitacoraArchivoAdjunto(int clienteId)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["op_SPC"].ConnectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("AT_InsCUArchivoAdjuntoB", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        int ixSession = ObtenerIxSession();
+
+                        cmd.Parameters.AddWithValue("@IxClienteUsuario", clienteId);
+                        cmd.Parameters.AddWithValue("@IxSession", ixSession);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarMensaje("Ocurrió un error al registrar la bitácora de archivo adjunto: " + ex.Message);
+            }
+        }
+
+        private int ObtenerIxSession()
+        {
+            if (Session["IxSesion"] != null && int.TryParse(Session["IxSesion"].ToString(), out int ixSesion))
+            {
+                return ixSesion;
+            }
+
+            return 0;
         }
 
         private void LimpiarFormulario()
@@ -258,10 +324,7 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
             txtRepresentante.Text = string.Empty;
             txtCedulaRepresentante.Text = string.Empty;
 
-            // Si tienes otros controles o campos que necesiten limpieza, agrégales aquí.
         }
-
-
 
         private int ObtenerUltimoClienteUsuarioId()
         {
@@ -290,7 +353,7 @@ namespace SPCi.Web.Applications.Pages.gC.Solicitudes
         {
             lblMensaje.Text = mensaje;
             lblMensaje.Attributes.Add("style", "white-space: pre-line;"); // Para permitir el uso de <br />
-            RadWindow1.VisibleOnPageLoad = true; // Asegúrate de que RadWindow1 sea visible
+            RadWindow1.VisibleOnPageLoad = true; 
         }
 
         private bool IsValidEmail(string email)

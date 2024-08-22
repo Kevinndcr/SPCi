@@ -7,7 +7,7 @@ namespace SPCi.Web.Public.Shared.MasterPages
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            Session.Add("IxSesion", "100");
+            Session.Add("IxSesion", "170");
             Session.Add("Email", "unusuario@compania.com");
             Session.Add("Alias", "yperez");
             Session.Add("IdCedula", "601230456");
